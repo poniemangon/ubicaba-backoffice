@@ -147,6 +147,12 @@
   border-radius: 8px;
 }
 
+.add-image-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .add-form button[type='submit'] {
   padding: 8px 16px;
   border: none;

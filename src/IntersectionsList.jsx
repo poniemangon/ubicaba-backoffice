@@ -32,6 +32,7 @@ export default function IntersectionsList() {
   const [newLat, setNewLat] = useState('')
   const [newLng, setNewLng] = useState('')
   const [newBarrioId, setNewBarrioId] = useState('49')
+  const [newImageFile, setNewImageFile] = useState(null)
   const [addSaving, setAddSaving] = useState(false)
   const [addError, setAddError] = useState(null)
   const [addSuccess, setAddSuccess] = useState(null)
@@ -102,25 +103,29 @@ export default function IntersectionsList() {
     setPage(0)
   }
 
+  const uploadImage = async (poolIndex, file) => {
+    const ext = file.name.split('.').pop() || 'jpg'
+    const path = `${poolIndex}.${ext}`
+    const { error: uploadError } = await supabase.storage
+      .from('intersection-images')
+      .upload(path, file, { upsert: true })
+    if (uploadError) throw uploadError
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('intersection-images').getPublicUrl(path)
+    return `${publicUrl}?v=${Date.now()}`
+  }
+
   const handleUpload = async (poolIndex, file) => {
     if (!file) return
     setUploadingIndex(poolIndex)
     setError(null)
     try {
-      const ext = file.name.split('.').pop() || 'jpg'
-      const path = `${poolIndex}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('intersection-images')
-        .upload(path, file, { upsert: true })
-      if (uploadError) throw uploadError
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('intersection-images').getPublicUrl(path)
-
+      const imageUrl = await uploadImage(poolIndex, file)
       const { error: updateError } = await supabase
         .from('intersections')
-        .update({ image_url: `${publicUrl}?v=${Date.now()}` })
+        .update({ image_url: imageUrl })
         .eq('pool_index', poolIndex)
       if (updateError) throw updateError
 
@@ -159,6 +164,8 @@ export default function IntersectionsList() {
       if (maxError) throw maxError
       const nextIndex = (maxRow?.pool_index ?? -1) + 1
 
+      const imageUrl = newImageFile ? await uploadImage(nextIndex, newImageFile) : null
+
       const { error: insertError } = await supabase.from('intersections').insert({
         pool_index: nextIndex,
         street1: newStreet1.trim(),
@@ -166,6 +173,7 @@ export default function IntersectionsList() {
         lat,
         lng,
         barrio_id: newBarrioId ? Number(newBarrioId) : null,
+        image_url: imageUrl,
       })
       if (insertError) throw insertError
 
@@ -174,6 +182,7 @@ export default function IntersectionsList() {
       setNewStreet2('')
       setNewLat('')
       setNewLng('')
+      setNewImageFile(null)
       await fetchRows()
     } catch (err) {
       setAddError(err.message)
@@ -339,6 +348,18 @@ export default function IntersectionsList() {
               setNewLng(pickedLng.toFixed(6))
             }}
           />
+          <div className="add-image-row">
+            {newImageFile && <img src={URL.createObjectURL(newImageFile)} alt="" className="thumb" />}
+            <label className="upload-btn">
+              {newImageFile ? newImageFile.name : 'Agregar imagen (opcional)'}
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => setNewImageFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+          </div>
           <button type="submit" disabled={addSaving}>
             {addSaving ? 'Guardando...' : 'Agregar'}
           </button>
