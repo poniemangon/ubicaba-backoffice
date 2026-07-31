@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import Login from './Login'
 import IntersectionsList from './IntersectionsList'
+import DuelsList from './DuelsList'
+import SettingsPanel from './SettingsPanel'
 import './App.css'
 
 function App() {
   const [session, setSession] = useState(undefined) // undefined = loading, null = signed out
+  const [tab, setTab] = useState('esquinas')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -31,7 +34,32 @@ function App() {
           Cerrar sesión
         </button>
       </header>
-      <IntersectionsList />
+      <nav className="tab-bar">
+        <button
+          type="button"
+          className={tab === 'esquinas' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('esquinas')}
+        >
+          Esquinas
+        </button>
+        <button
+          type="button"
+          className={tab === 'duelos' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('duelos')}
+        >
+          Duelos
+        </button>
+        <button
+          type="button"
+          className={tab === 'config' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('config')}
+        >
+          Config
+        </button>
+      </nav>
+      {tab === 'esquinas' && <IntersectionsList />}
+      {tab === 'duelos' && <DuelsList />}
+      {tab === 'config' && <SettingsPanel />}
     </div>
   )
 }
