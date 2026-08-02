@@ -14,6 +14,24 @@ export default function UsersList() {
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  // id -> signup rank (1 = first user ever registered), independent of the
+  // displayed sort order/search/pagination below. Fetched once — just two
+  // columns for every profile, cheap at this app's scale.
+  const [signupRank, setSignupRank] = useState(new Map())
+
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('id, created_at')
+      .order('created_at', { ascending: true })
+      .then(({ data, error: rankError }) => {
+        if (rankError) {
+          console.error(rankError)
+          return
+        }
+        setSignupRank(new Map(data.map((u, i) => [u.id, i + 1])))
+      })
+  }, [])
 
   const fetchRows = useCallback(async () => {
     setLoading(true)
@@ -21,7 +39,7 @@ export default function UsersList() {
     let query = supabase
       .from('profiles')
       .select('id, username, avatar_url, elo, ranked_games_played, created_at', { count: 'exact' })
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
 
     if (search.trim()) {
@@ -77,9 +95,9 @@ export default function UsersList() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((u, i) => (
+            {rows.map((u) => (
               <tr key={u.id}>
-                <td>{page * PAGE_SIZE + i + 1}</td>
+                <td>{signupRank.get(u.id) ?? '—'}</td>
                 <td>
                   {u.avatar_url ? (
                     <img src={u.avatar_url} alt="" className="thumb" />
