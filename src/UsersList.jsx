@@ -21,7 +21,7 @@ export default function UsersList() {
     let query = supabase
       .from('profiles')
       .select('id, username, avatar_url, elo, ranked_games_played, created_at', { count: 'exact' })
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
 
     if (search.trim()) {
