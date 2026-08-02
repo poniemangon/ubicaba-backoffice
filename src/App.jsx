@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import Login from './Login'
 import IntersectionsList from './IntersectionsList'
 import DuelsList from './DuelsList'
+import UsersList from './UsersList'
 import SettingsPanel from './SettingsPanel'
 import './App.css'
 
@@ -51,6 +52,13 @@ function App() {
         </button>
         <button
           type="button"
+          className={tab === 'usuarios' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('usuarios')}
+        >
+          Usuarios
+        </button>
+        <button
+          type="button"
           className={tab === 'config' ? 'tab-btn active' : 'tab-btn'}
           onClick={() => setTab('config')}
         >
@@ -59,6 +67,7 @@ function App() {
       </nav>
       {tab === 'esquinas' && <IntersectionsList />}
       {tab === 'duelos' && <DuelsList />}
+      {tab === 'usuarios' && <UsersList />}
       {tab === 'config' && <SettingsPanel />}
     </div>
   )
