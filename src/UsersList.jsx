@@ -68,6 +68,7 @@ export default function UsersList() {
         <table className="rows-table">
           <thead>
             <tr>
+              <th>#</th>
               <th></th>
               <th>Usuario</th>
               <th>Ranking</th>
@@ -76,8 +77,9 @@ export default function UsersList() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((u) => (
+            {rows.map((u, i) => (
               <tr key={u.id}>
+                <td>{page * PAGE_SIZE + i + 1}</td>
                 <td>
                   {u.avatar_url ? (
                     <img src={u.avatar_url} alt="" className="thumb" />
