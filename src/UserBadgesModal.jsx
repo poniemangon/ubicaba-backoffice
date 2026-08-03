@@ -5,6 +5,118 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function BadgeRow({ badge, onChanged }) {
+  const [editing, setEditing] = useState(false)
+  const [imageUrl, setImageUrl] = useState(badge.image_url)
+  const [title, setTitle] = useState(badge.title)
+  const [text, setText] = useState(badge.text ?? '')
+  const [isActive, setIsActive] = useState(badge.is_active)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const startEdit = () => {
+    setImageUrl(badge.image_url)
+    setTitle(badge.title)
+    setText(badge.text ?? '')
+    setIsActive(badge.is_active)
+    setError(null)
+    setEditing(true)
+  }
+
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setError(null)
+    if (!imageUrl.trim() || !title.trim()) {
+      setError('Falta la imagen o el título')
+      return
+    }
+    setSaving(true)
+    try {
+      const { error: updateError } = await supabase
+        .from('distintivos')
+        .update({
+          image_url: imageUrl.trim(),
+          title: title.trim(),
+          text: text.trim() || null,
+          is_active: isActive,
+        })
+        .eq('id', badge.id)
+      if (updateError) throw updateError
+      setEditing(false)
+      onChanged()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm(`¿Borrar el distintivo "${badge.title}"?`)) return
+    setSaving(true)
+    try {
+      const { error: deleteError } = await supabase.from('distintivos').delete().eq('id', badge.id)
+      if (deleteError) throw deleteError
+      onChanged()
+    } catch (err) {
+      setError(err.message)
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <li className="badge-item badge-item-editing">
+        <form className="add-form" onSubmit={handleSave}>
+          <input
+            type="text"
+            placeholder="URL de la imagen"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            required
+          />
+          <input type="text" placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          <input type="text" placeholder="Texto (opcional)" value={text} onChange={(e) => setText(e.target.value)} />
+          <label className="checkbox-label">
+            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+            Activo
+          </label>
+          <button type="submit" disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+          <button type="button" className="add-toggle-btn" onClick={() => setEditing(false)} disabled={saving}>
+            Cancelar
+          </button>
+          {error && <span className="add-error">{error}</span>}
+        </form>
+      </li>
+    )
+  }
+
+  return (
+    <li className={`badge-item${badge.is_active ? '' : ' badge-item-inactive'}`}>
+      <img src={badge.image_url} alt="" className="badge-item-image" />
+      <span className="badge-item-info">
+        <span className="badge-item-title">
+          {badge.title}
+          {!badge.is_active && ' (inactivo)'}
+        </span>
+        {badge.text && <span className="badge-item-text">{badge.text}</span>}
+        <span className="badge-item-date">{formatDate(badge.created_at)}</span>
+        {error && <span className="add-error">{error}</span>}
+      </span>
+      <span className="badge-item-actions">
+        <button type="button" className="edit-btn" onClick={startEdit} disabled={saving}>
+          Editar
+        </button>
+        <button type="button" className="edit-btn badge-delete-btn" onClick={handleDelete} disabled={saving}>
+          Borrar
+        </button>
+      </span>
+    </li>
+  )
+}
+
 export default function UserBadgesModal({ user, onClose }) {
   const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
@@ -91,17 +203,7 @@ export default function UserBadgesModal({ user, onClose }) {
         ) : (
           <ul className="badge-list">
             {badges.map((b) => (
-              <li key={b.id} className={`badge-item${b.is_active ? '' : ' badge-item-inactive'}`}>
-                <img src={b.image_url} alt="" className="badge-item-image" />
-                <span className="badge-item-info">
-                  <span className="badge-item-title">
-                    {b.title}
-                    {!b.is_active && ' (inactivo)'}
-                  </span>
-                  {b.text && <span className="badge-item-text">{b.text}</span>}
-                  <span className="badge-item-date">{formatDate(b.created_at)}</span>
-                </span>
-              </li>
+              <BadgeRow key={b.id} badge={b} onChanged={fetchBadges} />
             ))}
             {badges.length === 0 && <p className="profile-empty-text">Sin distintivos todavía.</p>}
           </ul>

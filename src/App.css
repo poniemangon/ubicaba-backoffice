@@ -511,3 +511,29 @@
 .badge-add-btn {
   margin-left: 0;
 }
+
+.badge-item-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.badge-item-editing {
+  display: block;
+  padding: 0;
+  border: none;
+}
+
+.badge-item-editing .add-form {
+  margin-bottom: 0;
+}
+
+.badge-delete-btn {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.badge-delete-btn:hover {
+  background: #fee2e2;
+}
