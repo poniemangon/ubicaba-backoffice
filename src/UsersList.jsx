@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import UserBadgesModal from './UserBadgesModal'
 
 const PAGE_SIZE = 30
 
@@ -18,6 +19,7 @@ export default function UsersList() {
   // displayed sort order/search/pagination below. Fetched once — just two
   // columns for every profile, cheap at this app's scale.
   const [signupRank, setSignupRank] = useState(new Map())
+  const [selectedUser, setSelectedUser] = useState(null)
 
   useEffect(() => {
     supabase
@@ -96,7 +98,7 @@ export default function UsersList() {
           </thead>
           <tbody>
             {rows.map((u) => (
-              <tr key={u.id}>
+              <tr key={u.id} className="rows-table-row-clickable" onClick={() => setSelectedUser(u)}>
                 <td>{signupRank.get(u.id) ?? '—'}</td>
                 <td>
                   {u.avatar_url ? (
@@ -126,6 +128,8 @@ export default function UsersList() {
           Siguiente ›
         </button>
       </div>
+
+      {selectedUser && <UserBadgesModal user={selectedUser} onClose={() => setSelectedUser(null)} />}
     </div>
   )
 }

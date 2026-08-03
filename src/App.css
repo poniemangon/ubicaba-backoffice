@@ -417,3 +417,97 @@
   padding: 20px 0;
   text-align: center;
 }
+
+.rows-table-row-clickable {
+  cursor: pointer;
+}
+
+.rows-table-row-clickable:hover {
+  background: #f9fafb;
+}
+
+.badge-user-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.badge-user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.badge-user-avatar.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: #f3f4f6;
+}
+
+.badge-user-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.badge-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.badge-item-inactive {
+  opacity: 0.55;
+}
+
+.badge-item-image {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.badge-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.badge-item-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.badge-item-text {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.badge-item-date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.badge-add-btn {
+  margin-left: 0;
+}
