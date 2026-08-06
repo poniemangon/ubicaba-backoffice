@@ -628,6 +628,18 @@
   color: var(--text-h);
 }
 
+.daily-map-tile-totals {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.daily-map-unique-users {
+  font-size: 15px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
 .daily-map-tile-breakdown {
   display: flex;
   gap: 10px;

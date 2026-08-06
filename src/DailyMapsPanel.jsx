@@ -52,7 +52,10 @@ export default function DailyMapsPanel() {
           {rows.map((r) => (
             <div key={r.day_number} className="stat-tile daily-map-tile">
               <span className="daily-map-tile-date">{formatDailyDate(r.day_number)}</span>
-              <span className="stat-tile-value">{r.total}</span>
+              <span className="daily-map-tile-totals">
+                <span className="stat-tile-value">{r.total}</span>
+                <span className="daily-map-unique-users">{r.unique_users}</span>
+              </span>
               <span className="daily-map-tile-breakdown">
                 <span className="daily-map-ranked">ranked: {r.ranked}</span>
                 <span className="daily-map-unranked">unranked: {r.unranked}</span>
