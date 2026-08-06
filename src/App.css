@@ -621,3 +621,23 @@
   transform-origin: top center;
   margin-top: 8px;
 }
+
+.daily-map-tile-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.daily-map-tile-breakdown {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.daily-map-ranked {
+  color: #16a34a;
+}
+
+.daily-map-unranked {
+  color: #9ca3af;
+}
