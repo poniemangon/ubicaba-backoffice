@@ -21,6 +21,14 @@ async function countRows(table, filters) {
   return count ?? 0
 }
 
+// One row per referring profile — small enough to just sum client-side
+// rather than adding another RPC for a single number.
+async function sumReferralVisits() {
+  const { data, error } = await supabase.from('referrals').select('visit_count')
+  if (error) throw error
+  return (data || []).reduce((sum, r) => sum + r.visit_count, 0)
+}
+
 // Rolling last-24h window (not calendar-day-aligned) labeled in the
 // viewer's local hours — comparing by epoch ms sidesteps timezone string
 // parsing entirely, since JS Dates are epoch-based regardless of how
@@ -75,6 +83,7 @@ export default function AnalyticsPanel() {
         sessionsTotal,
         pageviewsToday,
         pageviewsTotal,
+        referralVisits,
         topPagesResult,
         hourlyResult,
         dailyResult,
@@ -84,6 +93,7 @@ export default function AnalyticsPanel() {
         countRows('analytics_sessions', []),
         countRows('analytics_pageviews', [['created_at', 'gte', todayIso]]),
         countRows('analytics_pageviews', []),
+        sumReferralVisits(),
         supabase.rpc('top_pageviews', { since: sinceTopPagesIso, result_limit: TOP_PAGES_LIMIT }),
         supabase.rpc('pageviews_by_hour', { since: sinceHourlyIso }),
         supabase.rpc('pageviews_by_day', { since: sinceDailyIso }),
@@ -93,7 +103,7 @@ export default function AnalyticsPanel() {
       if (hourlyResult.error) throw hourlyResult.error
       if (dailyResult.error) throw dailyResult.error
 
-      setStats({ online, sessionsToday, sessionsTotal, pageviewsToday, pageviewsTotal })
+      setStats({ online, sessionsToday, sessionsTotal, pageviewsToday, pageviewsTotal, referralVisits })
       setTopPages(topPagesResult.data || [])
       setHourlyData(buildHourlyBuckets(hourlyResult.data || []))
       setDailyData(buildDailyBuckets(dailyResult.data || []))
@@ -140,6 +150,10 @@ export default function AnalyticsPanel() {
           <div className="stat-tile">
             <span className="stat-tile-value">{stats.pageviewsTotal}</span>
             <span className="stat-tile-label">Páginas vistas (total)</span>
+          </div>
+          <div className="stat-tile">
+            <span className="stat-tile-value">{stats.referralVisits}</span>
+            <span className="stat-tile-label">Visitas referidas</span>
           </div>
         </div>
       )}

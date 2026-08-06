@@ -19,6 +19,9 @@ export default function UsersList() {
   // displayed sort order/search/pagination below. Fetched once — just two
   // columns for every profile, cheap at this app's scale.
   const [signupRank, setSignupRank] = useState(new Map())
+  // user_id -> visit_count, one row per referring profile — same
+  // fetch-once-independent-of-pagination approach as signupRank above.
+  const [referralCounts, setReferralCounts] = useState(new Map())
   const [selectedUser, setSelectedUser] = useState(null)
 
   useEffect(() => {
@@ -32,6 +35,17 @@ export default function UsersList() {
           return
         }
         setSignupRank(new Map(data.map((u, i) => [u.id, i + 1])))
+      })
+
+    supabase
+      .from('referrals')
+      .select('user_id, visit_count')
+      .then(({ data, error: referralsError }) => {
+        if (referralsError) {
+          console.error(referralsError)
+          return
+        }
+        setReferralCounts(new Map(data.map((r) => [r.user_id, r.visit_count])))
       })
   }, [])
 
@@ -93,6 +107,7 @@ export default function UsersList() {
               <th>Usuario</th>
               <th>Ranking</th>
               <th>Partidas rankeadas</th>
+              <th>Referidos</th>
               <th>Registrado</th>
             </tr>
           </thead>
@@ -110,6 +125,7 @@ export default function UsersList() {
                 <td>{u.username}</td>
                 <td>{u.ranked_games_played > 0 ? u.elo : 'Sin ranking'}</td>
                 <td>{u.ranked_games_played}</td>
+                <td>{referralCounts.get(u.id) ?? 0}</td>
                 <td>{formatDate(u.created_at)}</td>
               </tr>
             ))}
