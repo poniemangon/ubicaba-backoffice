@@ -4,6 +4,7 @@ import Login from './Login'
 import IntersectionsList from './IntersectionsList'
 import DuelsList from './DuelsList'
 import UsersList from './UsersList'
+import AnalyticsPanel from './AnalyticsPanel'
 import SettingsPanel from './SettingsPanel'
 import './App.css'
 
@@ -59,6 +60,13 @@ function App() {
         </button>
         <button
           type="button"
+          className={tab === 'analiticas' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('analiticas')}
+        >
+          Analíticas
+        </button>
+        <button
+          type="button"
           className={tab === 'config' ? 'tab-btn active' : 'tab-btn'}
           onClick={() => setTab('config')}
         >
@@ -68,6 +76,7 @@ function App() {
       {tab === 'esquinas' && <IntersectionsList />}
       {tab === 'duelos' && <DuelsList />}
       {tab === 'usuarios' && <UsersList />}
+      {tab === 'analiticas' && <AnalyticsPanel />}
       {tab === 'config' && <SettingsPanel />}
     </div>
   )
