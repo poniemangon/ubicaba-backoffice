@@ -1,17 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
-
-const BUCKET = 'admin-uploads'
+import { UPLOADS_BUCKET, uploadToBucket } from './storage'
 
 function publicUrlFor(name) {
   const {
     data: { publicUrl },
-  } = supabase.storage.from(BUCKET).getPublicUrl(name)
+  } = supabase.storage.from(UPLOADS_BUCKET).getPublicUrl(name)
   return publicUrl
-}
-
-function sanitizeName(name) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_')
 }
 
 export default function FilesPanel() {
@@ -19,13 +14,14 @@ export default function FilesPanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const [copiedName, setCopiedName] = useState(null)
 
   const fetchFiles = useCallback(async () => {
     setLoading(true)
     setError(null)
     const { data, error: listError } = await supabase.storage
-      .from(BUCKET)
+      .from(UPLOADS_BUCKET)
       .list('', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } })
     if (listError) {
       setError(listError.message)
@@ -39,14 +35,16 @@ export default function FilesPanel() {
     fetchFiles()
   }, [fetchFiles])
 
-  const uploadFile = useCallback(
-    async (file) => {
+  const uploadFiles = useCallback(
+    async (fileList) => {
+      const imageFiles = Array.from(fileList).filter((f) => f.type.startsWith('image/'))
+      if (imageFiles.length === 0) return
       setUploading(true)
       setError(null)
       try {
-        const path = `${Date.now()}-${sanitizeName(file.name)}`
-        const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file)
-        if (uploadError) throw uploadError
+        for (const file of imageFiles) {
+          await uploadToBucket(file)
+        }
         await fetchFiles()
       } catch (err) {
         setError(err.message)
@@ -57,10 +55,10 @@ export default function FilesPanel() {
     [fetchFiles],
   )
 
-  const handleUpload = (e) => {
-    const file = e.target.files?.[0]
+  const handlePick = (e) => {
+    const fileList = e.target.files
     e.target.value = ''
-    if (file) uploadFile(file)
+    if (fileList?.length) uploadFiles(fileList)
   }
 
   // Paste an image (Ctrl+V) anywhere on the page while this tab is open —
@@ -70,11 +68,17 @@ export default function FilesPanel() {
       const item = Array.from(e.clipboardData?.items || []).find((i) => i.type.startsWith('image/'))
       if (!item) return
       const file = item.getAsFile()
-      if (file) uploadFile(file)
+      if (file) uploadFiles([file])
     }
     document.addEventListener('paste', handlePaste)
     return () => document.removeEventListener('paste', handlePaste)
-  }, [uploadFile])
+  }, [uploadFiles])
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragging(false)
+    if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files)
+  }
 
   const handleCopy = (name) => {
     navigator.clipboard.writeText(publicUrlFor(name))
@@ -85,7 +89,7 @@ export default function FilesPanel() {
   const handleDelete = async (name) => {
     if (!window.confirm(`¿Borrar "${name}"?`)) return
     setError(null)
-    const { error: deleteError } = await supabase.storage.from(BUCKET).remove([name])
+    const { error: deleteError } = await supabase.storage.from(UPLOADS_BUCKET).remove([name])
     if (deleteError) {
       setError(deleteError.message)
     } else {
@@ -97,12 +101,20 @@ export default function FilesPanel() {
     <div className="list-wrap">
       <div className="list-controls">
         <span className="total-count">{files.length} archivos</span>
-        <span className="picker-hint">o pegá una imagen con Ctrl+V</span>
-        <label className="upload-btn">
-          {uploading ? 'Subiendo...' : '+ Subir archivo'}
-          <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} hidden />
-        </label>
       </div>
+
+      <label
+        className={`dropzone${dragging ? ' dropzone-active' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragging(true)
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
+        {uploading ? 'Subiendo...' : 'Arrastrá una o más imágenes acá, pegá con Ctrl+V, o hacé click para elegir'}
+        <input type="file" accept="image/*" multiple onChange={handlePick} disabled={uploading} hidden />
+      </label>
 
       {error && <p className="error-banner">{error}</p>}
 

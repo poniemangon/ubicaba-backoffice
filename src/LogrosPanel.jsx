@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import { uploadToBucket } from './storage'
 
 const METRIC_TYPES = [
   { value: 'daily_maps_completed', label: 'Mapas del día completados' },
@@ -24,6 +25,22 @@ function LogroForm({ initial, onSave, onCancel, saving, error }) {
   const [metricType, setMetricType] = useState(initial.metric_type ?? METRIC_TYPES[0].value)
   const [threshold, setThreshold] = useState(initial.threshold ?? 1)
   const [isActive, setIsActive] = useState(initial.is_active ?? true)
+  const [imageDragging, setImageDragging] = useState(false)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imageError, setImageError] = useState(null)
+
+  const uploadImage = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return
+    setImageError(null)
+    setImageUploading(true)
+    try {
+      setImageUrl(await uploadToBucket(file))
+    } catch (err) {
+      setImageError(err.message)
+    } finally {
+      setImageUploading(false)
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -41,6 +58,38 @@ function LogroForm({ initial, onSave, onCancel, saving, error }) {
     <form className="add-form" onSubmit={handleSubmit}>
       <input type="text" placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
       <input type="text" placeholder="Texto (opcional)" value={text} onChange={(e) => setText(e.target.value)} />
+      <label
+        className={`dropzone dropzone-small${imageDragging ? ' dropzone-active' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setImageDragging(true)
+        }}
+        onDragLeave={() => setImageDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setImageDragging(false)
+          uploadImage(e.dataTransfer.files?.[0])
+        }}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className="dropzone-preview" />
+        ) : imageUploading ? (
+          'Subiendo...'
+        ) : (
+          'Arrastrá una imagen acá, o hacé click para elegir'
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            uploadImage(e.target.files?.[0])
+            e.target.value = ''
+          }}
+          disabled={imageUploading}
+          hidden
+        />
+      </label>
+      {imageError && <span className="add-error">{imageError}</span>}
       <input
         type="text"
         placeholder="URL de la imagen (opcional)"
