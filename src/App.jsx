@@ -6,6 +6,7 @@ import DuelsList from './DuelsList'
 import UsersList from './UsersList'
 import DailyMapsPanel from './DailyMapsPanel'
 import LogrosPanel from './LogrosPanel'
+import FilesPanel from './FilesPanel'
 import AnalyticsPanel from './AnalyticsPanel'
 import SettingsPanel from './SettingsPanel'
 import './App.css'
@@ -76,6 +77,13 @@ function App() {
         </button>
         <button
           type="button"
+          className={tab === 'archivos' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('archivos')}
+        >
+          Archivos
+        </button>
+        <button
+          type="button"
           className={tab === 'analiticas' ? 'tab-btn active' : 'tab-btn'}
           onClick={() => setTab('analiticas')}
         >
@@ -94,6 +102,7 @@ function App() {
       {tab === 'usuarios' && <UsersList />}
       {tab === 'mapas' && <DailyMapsPanel />}
       {tab === 'logros' && <LogrosPanel />}
+      {tab === 'archivos' && <FilesPanel />}
       {tab === 'analiticas' && <AnalyticsPanel />}
       {tab === 'config' && <SettingsPanel />}
     </div>
