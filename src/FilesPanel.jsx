@@ -39,23 +39,42 @@ export default function FilesPanel() {
     fetchFiles()
   }, [fetchFiles])
 
-  const handleUpload = async (e) => {
+  const uploadFile = useCallback(
+    async (file) => {
+      setUploading(true)
+      setError(null)
+      try {
+        const path = `${Date.now()}-${sanitizeName(file.name)}`
+        const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file)
+        if (uploadError) throw uploadError
+        await fetchFiles()
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setUploading(false)
+      }
+    },
+    [fetchFiles],
+  )
+
+  const handleUpload = (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file) return
-    setUploading(true)
-    setError(null)
-    try {
-      const path = `${Date.now()}-${sanitizeName(file.name)}`
-      const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file)
-      if (uploadError) throw uploadError
-      await fetchFiles()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setUploading(false)
-    }
+    if (file) uploadFile(file)
   }
+
+  // Paste an image (Ctrl+V) anywhere on the page while this tab is open —
+  // no need to save it to disk first just to pick it in the file input.
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const item = Array.from(e.clipboardData?.items || []).find((i) => i.type.startsWith('image/'))
+      if (!item) return
+      const file = item.getAsFile()
+      if (file) uploadFile(file)
+    }
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [uploadFile])
 
   const handleCopy = (name) => {
     navigator.clipboard.writeText(publicUrlFor(name))
@@ -78,6 +97,7 @@ export default function FilesPanel() {
     <div className="list-wrap">
       <div className="list-controls">
         <span className="total-count">{files.length} archivos</span>
+        <span className="picker-hint">o pegá una imagen con Ctrl+V</span>
         <label className="upload-btn">
           {uploading ? 'Subiendo...' : '+ Subir archivo'}
           <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} hidden />
