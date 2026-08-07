@@ -5,6 +5,7 @@ import IntersectionsList from './IntersectionsList'
 import DuelsList from './DuelsList'
 import UsersList from './UsersList'
 import DailyMapsPanel from './DailyMapsPanel'
+import LogrosPanel from './LogrosPanel'
 import AnalyticsPanel from './AnalyticsPanel'
 import SettingsPanel from './SettingsPanel'
 import './App.css'
@@ -68,6 +69,13 @@ function App() {
         </button>
         <button
           type="button"
+          className={tab === 'logros' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('logros')}
+        >
+          Logros
+        </button>
+        <button
+          type="button"
           className={tab === 'analiticas' ? 'tab-btn active' : 'tab-btn'}
           onClick={() => setTab('analiticas')}
         >
@@ -85,6 +93,7 @@ function App() {
       {tab === 'duelos' && <DuelsList />}
       {tab === 'usuarios' && <UsersList />}
       {tab === 'mapas' && <DailyMapsPanel />}
+      {tab === 'logros' && <LogrosPanel />}
       {tab === 'analiticas' && <AnalyticsPanel />}
       {tab === 'config' && <SettingsPanel />}
     </div>
