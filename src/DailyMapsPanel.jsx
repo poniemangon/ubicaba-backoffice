@@ -48,7 +48,7 @@ export default function DailyMapsPanel() {
       {loading ? (
         <p className="loading-text">Cargando...</p>
       ) : (
-        <div className="stat-tile-grid">
+        <div className="stat-tile-grid daily-map-tile-grid">
           {rows.map((r) => (
             <div key={r.day_number} className="stat-tile daily-map-tile">
               <span className="daily-map-tile-date">{formatDailyDate(r.day_number)}</span>

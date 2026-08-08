@@ -640,8 +640,19 @@
   color: #9ca3af;
 }
 
+.daily-map-tile-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 700px) {
+  .daily-map-tile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .daily-map-tile-breakdown {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   font-size: 13px;
 }

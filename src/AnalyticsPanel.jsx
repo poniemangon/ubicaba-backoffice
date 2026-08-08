@@ -84,6 +84,7 @@ export default function AnalyticsPanel() {
         pageviewsToday,
         pageviewsTotal,
         referralVisits,
+        referredSignups,
         topPagesResult,
         hourlyResult,
         dailyResult,
@@ -94,6 +95,7 @@ export default function AnalyticsPanel() {
         countRows('analytics_pageviews', [['created_at', 'gte', todayIso]]),
         countRows('analytics_pageviews', []),
         sumReferralVisits(),
+        countRows('profiles', [['is_referred', 'eq', true]]),
         supabase.rpc('top_pageviews', { since: sinceTopPagesIso, result_limit: TOP_PAGES_LIMIT }),
         supabase.rpc('pageviews_by_hour', { since: sinceHourlyIso }),
         supabase.rpc('pageviews_by_day', { since: sinceDailyIso }),
@@ -103,7 +105,7 @@ export default function AnalyticsPanel() {
       if (hourlyResult.error) throw hourlyResult.error
       if (dailyResult.error) throw dailyResult.error
 
-      setStats({ online, sessionsToday, sessionsTotal, pageviewsToday, pageviewsTotal, referralVisits })
+      setStats({ online, sessionsToday, sessionsTotal, pageviewsToday, pageviewsTotal, referralVisits, referredSignups })
       setTopPages(topPagesResult.data || [])
       setHourlyData(buildHourlyBuckets(hourlyResult.data || []))
       setDailyData(buildDailyBuckets(dailyResult.data || []))
@@ -154,6 +156,10 @@ export default function AnalyticsPanel() {
           <div className="stat-tile">
             <span className="stat-tile-value">{stats.referralVisits}</span>
             <span className="stat-tile-label">Visitas referidas</span>
+          </div>
+          <div className="stat-tile">
+            <span className="stat-tile-value">{stats.referredSignups}</span>
+            <span className="stat-tile-label">Usuarios registrados por referido</span>
           </div>
         </div>
       )}
