@@ -59,6 +59,7 @@ export default function DailyMapsPanel() {
               <span className="daily-map-tile-breakdown">
                 <span className="daily-map-ranked">ranked: {r.ranked}</span>
                 <span className="daily-map-unranked">unranked: {r.unranked}</span>
+                <span className="daily-map-unlogged">unlogged: {r.unlogged}</span>
               </span>
             </div>
           ))}

@@ -654,6 +654,10 @@
   color: #9ca3af;
 }
 
+.daily-map-unlogged {
+  color: #d97706;
+}
+
 .files-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
