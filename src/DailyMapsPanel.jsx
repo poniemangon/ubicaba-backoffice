@@ -4,21 +4,14 @@ import { supabase } from './supabaseClient'
 const DAY_MS = 24 * 60 * 60 * 1000
 const EPOCH_UTC = Date.UTC(2024, 0, 1)
 
-// Subtle tint per day of the week (getUTCDay: 0=Sunday..6=Saturday) — every
-// Monday is the same color, every Tuesday another, etc., stable regardless
-// of when "today" is.
-const WEEKDAY_COLORS = [
-  '#fdf2f8', // Sunday — pink
-  '#fef2f2', // Monday — red
-  '#eff6ff', // Tuesday — blue
-  '#f0fdf4', // Wednesday — green
-  '#fefce8', // Thursday — yellow
-  '#faf5ff', // Friday — purple
-  '#fff7ed', // Saturday — orange
-]
+// Subtle tints, one per 7-day block starting from day_number 0 — a given
+// day always lands in the same week-block, so its color is stable across
+// reloads regardless of when "today" is.
+const WEEK_COLORS = ['#eef2ff', '#f0fdf4', '#fefce8', '#fdf2f8', '#f0f9ff', '#faf5ff']
 
-function weekdayColorFor(dayNumber) {
-  return WEEKDAY_COLORS[new Date(EPOCH_UTC + dayNumber * DAY_MS).getUTCDay()]
+function weekColorFor(dayNumber) {
+  const weekIndex = Math.floor(dayNumber / 7)
+  return WEEK_COLORS[weekIndex % WEEK_COLORS.length]
 }
 
 function formatDailyDate(dayNumber) {
@@ -71,7 +64,7 @@ export default function DailyMapsPanel() {
             <div
               key={r.day_number}
               className="stat-tile daily-map-tile"
-              style={{ background: weekdayColorFor(r.day_number) }}
+              style={{ background: weekColorFor(r.day_number) }}
             >
               <span className="daily-map-tile-date">{formatDailyDate(r.day_number)}</span>
               <span className="daily-map-tile-totals">
