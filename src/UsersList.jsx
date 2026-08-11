@@ -171,7 +171,16 @@ export default function UsersList() {
         </button>
       </div>
 
-      {selectedUser && <UserBadgesModal user={selectedUser} onClose={() => setSelectedUser(null)} />}
+      {selectedUser && (
+        <UserBadgesModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onUsernameChanged={(id, newUsername) => {
+            setAllRows((prev) => prev.map((r) => (r.id === id ? { ...r, username: newUsername } : r)))
+            setSelectedUser((prev) => (prev ? { ...prev, username: newUsername } : prev))
+          }}
+        />
+      )}
     </div>
   )
 }

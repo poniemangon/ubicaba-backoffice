@@ -460,9 +460,17 @@
 }
 
 .badge-user-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 700;
   color: var(--text-h);
+}
+
+.badge-user-name .edit-btn {
+  padding: 2px 8px;
+  font-size: 13px;
 }
 
 .badge-list {

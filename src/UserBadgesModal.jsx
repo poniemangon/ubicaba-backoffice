@@ -117,10 +117,16 @@ function BadgeRow({ badge, onChanged }) {
   )
 }
 
-export default function UserBadgesModal({ user, onClose }) {
+export default function UserBadgesModal({ user, onClose, onUsernameChanged }) {
   const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const [editingUsername, setEditingUsername] = useState(false)
+  const [usernameInput, setUsernameInput] = useState(user.username)
+  const [usernameSaving, setUsernameSaving] = useState(false)
+  const [usernameError, setUsernameError] = useState(null)
+  const [currentUsername, setCurrentUsername] = useState(user.username)
 
   const [addOpen, setAddOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
@@ -148,6 +154,32 @@ export default function UserBadgesModal({ user, onClose }) {
     fetchBadges()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id])
+
+  const handleSaveUsername = async (e) => {
+    e.preventDefault()
+    setUsernameError(null)
+    const trimmed = usernameInput.trim()
+    if (!trimmed) {
+      setUsernameError('El nombre no puede estar vacío')
+      return
+    }
+    if (trimmed === currentUsername) {
+      setEditingUsername(false)
+      return
+    }
+    setUsernameSaving(true)
+    try {
+      const { error: updateError } = await supabase.from('profiles').update({ username: trimmed }).eq('id', user.id)
+      if (updateError) throw updateError
+      setCurrentUsername(trimmed)
+      setEditingUsername(false)
+      onUsernameChanged?.(user.id, trimmed)
+    } catch (err) {
+      setUsernameError(err.code === '23505' ? 'Ese nombre de usuario ya está en uso' : err.message)
+    } finally {
+      setUsernameSaving(false)
+    }
+  }
 
   const handleAddBadge = async (e) => {
     e.preventDefault()
@@ -193,7 +225,47 @@ export default function UserBadgesModal({ user, onClose }) {
           ) : (
             <span className="badge-user-avatar no-image">🙂</span>
           )}
-          <span className="badge-user-name">{user.username}</span>
+          {editingUsername ? (
+            <form className="add-form" onSubmit={handleSaveUsername}>
+              <input
+                type="text"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                autoFocus
+                required
+              />
+              <button type="submit" disabled={usernameSaving}>
+                {usernameSaving ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button
+                type="button"
+                className="add-toggle-btn"
+                disabled={usernameSaving}
+                onClick={() => {
+                  setUsernameInput(currentUsername)
+                  setUsernameError(null)
+                  setEditingUsername(false)
+                }}
+              >
+                Cancelar
+              </button>
+              {usernameError && <span className="add-error">{usernameError}</span>}
+            </form>
+          ) : (
+            <span className="badge-user-name">
+              {currentUsername}
+              <button
+                type="button"
+                className="edit-btn"
+                onClick={() => {
+                  setUsernameInput(currentUsername)
+                  setEditingUsername(true)
+                }}
+              >
+                ✏️
+              </button>
+            </span>
+          )}
         </div>
 
         {error && <p className="error-banner">{error}</p>}
