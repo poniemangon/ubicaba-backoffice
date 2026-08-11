@@ -5,6 +5,7 @@ import IntersectionsList from './IntersectionsList'
 import DuelsList from './DuelsList'
 import UsersList from './UsersList'
 import DailyMapsPanel from './DailyMapsPanel'
+import GroupsList from './GroupsList'
 import LogrosPanel from './LogrosPanel'
 import FilesPanel from './FilesPanel'
 import AnalyticsPanel from './AnalyticsPanel'
@@ -70,6 +71,13 @@ function App() {
         </button>
         <button
           type="button"
+          className={tab === 'grupos' ? 'tab-btn active' : 'tab-btn'}
+          onClick={() => setTab('grupos')}
+        >
+          Grupos
+        </button>
+        <button
+          type="button"
           className={tab === 'logros' ? 'tab-btn active' : 'tab-btn'}
           onClick={() => setTab('logros')}
         >
@@ -101,6 +109,7 @@ function App() {
       {tab === 'duelos' && <DuelsList />}
       {tab === 'usuarios' && <UsersList />}
       {tab === 'mapas' && <DailyMapsPanel />}
+      {tab === 'grupos' && <GroupsList />}
       {tab === 'logros' && <LogrosPanel />}
       {tab === 'archivos' && <FilesPanel />}
       {tab === 'analiticas' && <AnalyticsPanel />}

@@ -285,6 +285,23 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
+.group-detail-modal {
+  max-width: 760px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 16px 0 8px;
+}
+
+.modal-section-title:first-of-type {
+  margin-top: 4px;
+}
+
 .calendar-modal-header {
   display: flex;
   align-items: center;
