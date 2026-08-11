@@ -11,8 +11,9 @@ function formatDate(iso) {
 export default function UsersList() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
-  const [rows, setRows] = useState([])
-  const [totalCount, setTotalCount] = useState(0)
+  const [sortBy, setSortBy] = useState('created_at') // 'created_at' | 'referrals'
+  const [sortDir, setSortDir] = useState('desc') // 'asc' | 'desc'
+  const [allRows, setAllRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   // id -> signup rank (1 = first user ever registered), independent of the
@@ -49,35 +50,56 @@ export default function UsersList() {
       })
   }, [])
 
+  // Referral count isn't a column on profiles (it lives in the separate
+  // referrals table, already fully loaded above), so sorting by it can't be
+  // pushed down as a plain .order() on this query — fetch every matching
+  // profile (same unpaginated-fetch precedent as signupRank/referralCounts
+  // above) and sort + paginate client-side for both sort keys, so the two
+  // stay consistent with each other.
   const fetchRows = useCallback(async () => {
     setLoading(true)
     setError(null)
-    let query = supabase
-      .from('profiles')
-      .select('id, username, avatar_url, elo, ranked_games_played, created_at', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
+    let query = supabase.from('profiles').select('id, username, avatar_url, elo, ranked_games_played, created_at')
 
     if (search.trim()) {
       const term = search.trim().replace(/[%_]/g, '')
       query = query.ilike('username', `%${term}%`)
     }
 
-    const { data, error: fetchError, count } = await query
+    const { data, error: fetchError } = await query
     if (fetchError) {
       setError(fetchError.message)
     } else {
-      setRows(data)
-      setTotalCount(count ?? 0)
+      setAllRows(data)
     }
     setLoading(false)
-  }, [search, page])
+  }, [search])
 
   useEffect(() => {
     fetchRows()
   }, [fetchRows])
 
+  const sorted = [...allRows].sort((a, b) => {
+    const va = sortBy === 'referrals' ? referralCounts.get(a.id) ?? 0 : new Date(a.created_at).getTime()
+    const vb = sortBy === 'referrals' ? referralCounts.get(b.id) ?? 0 : new Date(b.created_at).getTime()
+    return sortDir === 'asc' ? va - vb : vb - va
+  })
+
+  const totalCount = sorted.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const rows = sorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+
+  const toggleSort = (column) => {
+    if (sortBy === column) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortBy(column)
+      setSortDir('desc')
+    }
+    setPage(0)
+  }
+
+  const sortArrow = (column) => (sortBy === column ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '')
 
   return (
     <div className="list-wrap">
@@ -107,8 +129,12 @@ export default function UsersList() {
               <th>Usuario</th>
               <th>Ranking</th>
               <th>Partidas rankeadas</th>
-              <th>Referidos</th>
-              <th>Registrado</th>
+              <th className="rows-table-sortable" onClick={() => toggleSort('referrals')}>
+                Referidos{sortArrow('referrals')}
+              </th>
+              <th className="rows-table-sortable" onClick={() => toggleSort('created_at')}>
+                Registrado{sortArrow('created_at')}
+              </th>
             </tr>
           </thead>
           <tbody>

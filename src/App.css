@@ -363,6 +363,16 @@
   color: var(--text);
 }
 
+.rows-table-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.rows-table-sortable:hover {
+  color: var(--text-h);
+}
+
 .thumb {
   width: 48px;
   height: 48px;
