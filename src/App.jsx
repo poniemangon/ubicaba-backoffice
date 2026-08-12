@@ -12,9 +12,27 @@ import AnalyticsPanel from './AnalyticsPanel'
 import SettingsPanel from './SettingsPanel'
 import './App.css'
 
+const TABS = [
+  { id: 'esquinas', label: 'Esquinas' },
+  { id: 'duelos', label: 'Duelos' },
+  { id: 'usuarios', label: 'Usuarios' },
+  { id: 'mapas', label: 'Mapas del día' },
+  { id: 'grupos', label: 'Grupos' },
+  { id: 'logros', label: 'Logros' },
+  { id: 'archivos', label: 'Archivos' },
+  { id: 'analiticas', label: 'Analíticas' },
+  { id: 'config', label: 'Config' },
+]
+
 function App() {
   const [session, setSession] = useState(undefined) // undefined = loading, null = signed out
   const [tab, setTab] = useState('esquinas')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const selectTab = (t) => {
+    setTab(t)
+    setMobileMenuOpen(false)
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -36,74 +54,31 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>UbiCABA Admin</h1>
-        <button type="button" className="logout-btn" onClick={() => supabase.auth.signOut()}>
-          Cerrar sesión
-        </button>
+        <div className="app-header-actions">
+          <button
+            type="button"
+            className="burger-btn"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            aria-label="Abrir menú"
+          >
+            ☰
+          </button>
+          <button type="button" className="logout-btn" onClick={() => supabase.auth.signOut()}>
+            Cerrar sesión
+          </button>
+        </div>
       </header>
-      <nav className="tab-bar">
-        <button
-          type="button"
-          className={tab === 'esquinas' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('esquinas')}
-        >
-          Esquinas
-        </button>
-        <button
-          type="button"
-          className={tab === 'duelos' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('duelos')}
-        >
-          Duelos
-        </button>
-        <button
-          type="button"
-          className={tab === 'usuarios' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('usuarios')}
-        >
-          Usuarios
-        </button>
-        <button
-          type="button"
-          className={tab === 'mapas' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('mapas')}
-        >
-          Mapas del día
-        </button>
-        <button
-          type="button"
-          className={tab === 'grupos' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('grupos')}
-        >
-          Grupos
-        </button>
-        <button
-          type="button"
-          className={tab === 'logros' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('logros')}
-        >
-          Logros
-        </button>
-        <button
-          type="button"
-          className={tab === 'archivos' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('archivos')}
-        >
-          Archivos
-        </button>
-        <button
-          type="button"
-          className={tab === 'analiticas' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('analiticas')}
-        >
-          Analíticas
-        </button>
-        <button
-          type="button"
-          className={tab === 'config' ? 'tab-btn active' : 'tab-btn'}
-          onClick={() => setTab('config')}
-        >
-          Config
-        </button>
+      <nav className={`tab-bar${mobileMenuOpen ? ' tab-bar-open' : ''}`}>
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={tab === t.id ? 'tab-btn active' : 'tab-btn'}
+            onClick={() => selectTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
       </nav>
       {tab === 'esquinas' && <IntersectionsList />}
       {tab === 'duelos' && <DuelsList />}
