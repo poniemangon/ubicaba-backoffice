@@ -7,10 +7,14 @@ const TOP_PAGES_DAYS = 7
 const TOP_PAGES_LIMIT = 20
 const DAILY_CHART_DAYS = 30
 
-function startOfTodayIso() {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
+// Argentina is fixed UTC-3 year-round (no DST) — shift "now" by that offset
+// before reading calendar fields, so "today" means today in Buenos Aires
+// regardless of the admin viewer's own device timezone (same pattern used
+// throughout the rest of this admin panel and baires-geoguess).
+function startOfTodayIsoAR() {
+  const arInstant = new Date(Date.now() - 3 * 60 * 60 * 1000)
+  const arMidnightUtcMs = Date.UTC(arInstant.getUTCFullYear(), arInstant.getUTCMonth(), arInstant.getUTCDate()) + 3 * 60 * 60 * 1000
+  return new Date(arMidnightUtcMs).toISOString()
 }
 
 async function countRows(table, filters) {
@@ -29,30 +33,30 @@ async function sumReferralVisits() {
   return (data || []).reduce((sum, r) => sum + r.visit_count, 0)
 }
 
-// Rolling last-24h window (not calendar-day-aligned) labeled in the
-// viewer's local hours — comparing by epoch ms sidesteps timezone string
-// parsing entirely, since JS Dates are epoch-based regardless of how
-// they're displayed.
+// Rolling last-24h window (not calendar-day-aligned), labeled in Buenos
+// Aires hours regardless of the admin viewer's own device timezone. An
+// hour boundary in UTC is also an hour boundary in Argentina (fixed
+// UTC-3, no DST — a whole-hour offset), so hour_start's UTC instants are
+// already valid AR bucket boundaries too; only the label needs shifting.
 function buildHourlyBuckets(rows) {
   const byHour = new Map(rows.map((r) => [new Date(r.hour_start).getTime(), Number(r.pageviews)]))
-  const now = new Date()
-  const currentHourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours())
+  const currentUtcHourStart = Math.floor(Date.now() / (60 * 60 * 1000)) * 60 * 60 * 1000
   const buckets = []
   for (let i = 23; i >= 0; i--) {
-    const bucket = new Date(currentHourStart.getTime() - i * 60 * 60 * 1000)
-    buckets.push({ label: `${bucket.getHours()}h`, value: byHour.get(bucket.getTime()) ?? 0 })
+    const bucketMs = currentUtcHourStart - i * 60 * 60 * 1000
+    const arHour = (new Date(bucketMs).getUTCHours() + 21) % 24 // utcHour - 3, wrapped to 0..23
+    buckets.push({ label: `${arHour}h`, value: byHour.get(bucketMs) ?? 0 })
   }
   return buckets
 }
 
-// UTC calendar days (matches pageviews_by_day's grouping) — a rough trend
-// chart, not worth localizing per-viewer for day-boundary precision.
+// Buenos Aires calendar days (matches pageviews_by_day's grouping, 0056).
 function buildDailyBuckets(rows) {
   const byDay = new Map(rows.map((r) => [r.day_start, Number(r.unique_sessions)]))
-  const today = new Date()
+  const arNow = new Date(Date.now() - 3 * 60 * 60 * 1000)
   const buckets = []
   for (let i = DAILY_CHART_DAYS - 1; i >= 0; i--) {
-    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - i))
+    const d = new Date(Date.UTC(arNow.getUTCFullYear(), arNow.getUTCMonth(), arNow.getUTCDate() - i))
     const key = d.toISOString().slice(0, 10)
     buckets.push({ label: `${d.getUTCDate()}/${d.getUTCMonth() + 1}`, value: byDay.get(key) ?? 0 })
   }
@@ -71,7 +75,7 @@ export default function AnalyticsPanel() {
     setLoading(true)
     setError(null)
     try {
-      const todayIso = startOfTodayIso()
+      const todayIso = startOfTodayIsoAR()
       const onlineSinceIso = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString()
       const sinceTopPagesIso = new Date(Date.now() - TOP_PAGES_DAYS * 24 * 60 * 60 * 1000).toISOString()
       const sinceHourlyIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
