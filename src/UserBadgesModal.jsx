@@ -117,7 +117,7 @@ function BadgeRow({ badge, onChanged }) {
   )
 }
 
-export default function UserBadgesModal({ user, onClose, onUsernameChanged }) {
+export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBanChanged }) {
   const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -127,6 +127,10 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged }) {
   const [usernameSaving, setUsernameSaving] = useState(false)
   const [usernameError, setUsernameError] = useState(null)
   const [currentUsername, setCurrentUsername] = useState(user.username)
+
+  const [isBanned, setIsBanned] = useState(!!user.is_banned)
+  const [banSaving, setBanSaving] = useState(false)
+  const [banError, setBanError] = useState(null)
 
   const [addOpen, setAddOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
@@ -178,6 +182,23 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged }) {
       setUsernameError(err.code === '23505' ? 'Ese nombre de usuario ya está en uso' : err.message)
     } finally {
       setUsernameSaving(false)
+    }
+  }
+
+  const handleToggleBan = async () => {
+    const next = !isBanned
+    if (next && !window.confirm(`¿Banear a "${currentUsername}"? No va a poder jugar competitivo ni duelos rankeados.`)) return
+    setBanError(null)
+    setBanSaving(true)
+    try {
+      const { error: updateError } = await supabase.from('profiles').update({ is_banned: next }).eq('id', user.id)
+      if (updateError) throw updateError
+      setIsBanned(next)
+      onBanChanged?.(user.id, next)
+    } catch (err) {
+      setBanError(err.message)
+    } finally {
+      setBanSaving(false)
     }
   }
 
@@ -254,6 +275,7 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged }) {
           ) : (
             <span className="badge-user-name">
               {currentUsername}
+              {isBanned && <span className="ban-badge"> 🚫 Baneado</span>}
               <button
                 type="button"
                 className="edit-btn"
@@ -266,8 +288,17 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged }) {
               </button>
             </span>
           )}
+          <button
+            type="button"
+            className={`edit-btn${isBanned ? '' : ' badge-delete-btn'}`}
+            onClick={handleToggleBan}
+            disabled={banSaving}
+          >
+            {banSaving ? 'Guardando...' : isBanned ? 'Desbanear' : 'Banear'}
+          </button>
         </div>
 
+        {banError && <p className="error-banner">{banError}</p>}
         {error && <p className="error-banner">{error}</p>}
 
         {loading ? (

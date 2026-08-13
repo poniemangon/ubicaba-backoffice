@@ -59,7 +59,9 @@ export default function UsersList() {
   const fetchRows = useCallback(async () => {
     setLoading(true)
     setError(null)
-    let query = supabase.from('profiles').select('id, username, avatar_url, elo, ranked_games_played, created_at')
+    let query = supabase
+      .from('profiles')
+      .select('id, username, avatar_url, elo, ranked_games_played, created_at, is_banned')
 
     if (search.trim()) {
       const term = search.trim().replace(/[%_]/g, '')
@@ -148,7 +150,10 @@ export default function UsersList() {
                     <span className="no-image">🙂</span>
                   )}
                 </td>
-                <td>{u.username}</td>
+                <td>
+                  {u.username}
+                  {u.is_banned && <span className="ban-badge"> 🚫 Baneado</span>}
+                </td>
                 <td>{u.ranked_games_played > 0 ? u.elo : 'Sin ranking'}</td>
                 <td>{u.ranked_games_played}</td>
                 <td>{referralCounts.get(u.id) ?? 0}</td>
@@ -178,6 +183,10 @@ export default function UsersList() {
           onUsernameChanged={(id, newUsername) => {
             setAllRows((prev) => prev.map((r) => (r.id === id ? { ...r, username: newUsername } : r)))
             setSelectedUser((prev) => (prev ? { ...prev, username: newUsername } : prev))
+          }}
+          onBanChanged={(id, isBanned) => {
+            setAllRows((prev) => prev.map((r) => (r.id === id ? { ...r, is_banned: isBanned } : r)))
+            setSelectedUser((prev) => (prev ? { ...prev, is_banned: isBanned } : prev))
           }}
         />
       )}
