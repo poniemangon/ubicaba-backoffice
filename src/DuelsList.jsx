@@ -131,7 +131,7 @@ export default function DuelsList() {
                 <td>{formatDate(d.closed_at)}</td>
                 <td>
                   {d.group ? (
-                    <span className="badge badge-group">Grupo: {d.group.name}</span>
+                    <span className="badge badge-group">De grupo</span>
                   ) : d.is_multiplayer ? (
                     'Multijugador'
                   ) : (
@@ -140,7 +140,7 @@ export default function DuelsList() {
                 </td>
                 <td>
                   {d.group ? (
-                    <span className="badge badge-group">De grupo</span>
+                    <span className="badge badge-group">{d.group.name}</span>
                   ) : (
                     <span className={`badge ${d.matchmaking ? 'badge-mm' : 'badge-direct'}`}>
                       {d.matchmaking ? 'Random' : 'Privado'}
