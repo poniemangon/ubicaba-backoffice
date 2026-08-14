@@ -43,7 +43,8 @@ export default function DuelsList() {
         `id, invite_code, matchmaking, is_multiplayer, created_at, closed_at, winner_id,
         challenger:challenger_id(id, username),
         opponent:opponent_id(id, username),
-        duel_results(profile_id, total_score, profile:profile_id(id, username))`,
+        duel_results(profile_id, total_score, profile:profile_id(id, username)),
+        group:group_duel(id, name)`,
         { count: 'exact' },
       )
       .not('closed_at', 'is', null)
@@ -53,8 +54,16 @@ export default function DuelsList() {
     if (matchmakingFilter) {
       query = query.eq('matchmaking', matchmakingFilter === 'si')
     }
-    if (modeFilter) {
-      query = query.eq('is_multiplayer', modeFilter === 'multi')
+    // Group duels are also is_multiplayer=true under the hood (see App.jsx's
+    // handleStartGroupDuel), so "Multijugador" needs to explicitly exclude
+    // them to mean "sala abierta libre" — otherwise it'd silently include
+    // every group duel too.
+    if (modeFilter === '1v1') {
+      query = query.eq('is_multiplayer', false)
+    } else if (modeFilter === 'multi') {
+      query = query.eq('is_multiplayer', true).is('group_duel', null)
+    } else if (modeFilter === 'group') {
+      query = query.not('group_duel', 'is', null)
     }
 
     const { data, error: fetchError, count } = await query
@@ -97,6 +106,7 @@ export default function DuelsList() {
           <option value="">Modo: todos</option>
           <option value="1v1">1v1</option>
           <option value="multi">Multijugador</option>
+          <option value="group">De grupo</option>
         </select>
         <span className="total-count">{totalCount} duelos completados</span>
       </div>
@@ -119,11 +129,23 @@ export default function DuelsList() {
             {rows.map((d) => (
               <tr key={d.id}>
                 <td>{formatDate(d.closed_at)}</td>
-                <td>{d.is_multiplayer ? 'Multijugador' : '1v1'}</td>
                 <td>
-                  <span className={`badge ${d.matchmaking ? 'badge-mm' : 'badge-direct'}`}>
-                    {d.matchmaking ? 'Random' : 'Privado'}
-                  </span>
+                  {d.group ? (
+                    <span className="badge badge-group">Grupo: {d.group.name}</span>
+                  ) : d.is_multiplayer ? (
+                    'Multijugador'
+                  ) : (
+                    '1v1'
+                  )}
+                </td>
+                <td>
+                  {d.group ? (
+                    <span className="badge badge-group">De grupo</span>
+                  ) : (
+                    <span className={`badge ${d.matchmaking ? 'badge-mm' : 'badge-direct'}`}>
+                      {d.matchmaking ? 'Random' : 'Privado'}
+                    </span>
+                  )}
                 </td>
                 <td>
                   <ul className="results-list">
