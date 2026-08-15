@@ -6,6 +6,7 @@ import DuelsList from './DuelsList'
 import UsersList from './UsersList'
 import DailyMapsPanel from './DailyMapsPanel'
 import GroupsList from './GroupsList'
+import CommentsList from './CommentsList'
 import LogrosPanel from './LogrosPanel'
 import FilesPanel from './FilesPanel'
 import AnalyticsPanel from './AnalyticsPanel'
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'usuarios', label: 'Usuarios' },
   { id: 'mapas', label: 'Mapas del día' },
   { id: 'grupos', label: 'Grupos' },
+  { id: 'comentarios', label: 'Comentarios' },
   { id: 'logros', label: 'Logros' },
   { id: 'archivos', label: 'Archivos' },
   { id: 'analiticas', label: 'Analíticas' },
@@ -85,6 +87,7 @@ function App() {
       {tab === 'usuarios' && <UsersList />}
       {tab === 'mapas' && <DailyMapsPanel />}
       {tab === 'grupos' && <GroupsList />}
+      {tab === 'comentarios' && <CommentsList />}
       {tab === 'logros' && <LogrosPanel />}
       {tab === 'archivos' && <FilesPanel />}
       {tab === 'analiticas' && <AnalyticsPanel />}
