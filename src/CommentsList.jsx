@@ -38,7 +38,7 @@ function CommentDetailModal({ comment, onClose }) {
           </div>
         )}
 
-        <p className="comment-detail-street">{isGeneral ? 'General' : i ? formatStreets(i.street1, i.street2) : 'Esquina no encontrada'}</p>
+        {!isGeneral && <p className="comment-detail-street">{i ? formatStreets(i.street1, i.street2) : 'Esquina no encontrada'}</p>}
         <p className="comment-detail-text">{comment.text}</p>
         <p className="comment-detail-meta">
           {comment.profile?.username ?? 'Jugador'} — {formatDate(comment.created_at)}
@@ -124,7 +124,7 @@ export default function CommentsList() {
                 onClick={() => handleOpen(c)}
               >
                 <td>{formatDate(c.created_at)}</td>
-                <td>{c.pool_index == null ? 'General' : c.intersection ? formatStreets(c.intersection.street1, c.intersection.street2) : '—'}</td>
+                <td>{c.pool_index == null ? 'Comentario general' : c.intersection ? formatStreets(c.intersection.street1, c.intersection.street2) : '—'}</td>
                 <td>{c.profile?.username ?? 'Jugador'}</td>
                 <td className="comment-row-text">{c.text}</td>
               </tr>
