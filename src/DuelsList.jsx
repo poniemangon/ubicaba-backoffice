@@ -43,7 +43,7 @@ export default function DuelsList() {
         `id, invite_code, matchmaking, is_multiplayer, created_at, closed_at, winner_id,
         challenger:challenger_id(id, username),
         opponent:opponent_id(id, username),
-        duel_results(profile_id, total_score, profile:profile_id(id, username)),
+        duel_results(profile_id, total_score, previous_elo, new_elo, profile:profile_id(id, username)),
         group:group_duel(id, name)`,
         { count: 'exact' },
       )
@@ -153,6 +153,9 @@ export default function DuelsList() {
                       <li key={r.profile_id} className={r.profile_id === d.winner_id ? 'winner' : ''}>
                         {r.profile?.username ?? '—'}: {r.total_score === null ? 'no jugó' : r.total_score}
                         {r.profile_id === d.winner_id ? ' 🏆' : ''}
+                        {r.previous_elo != null && r.new_elo != null && (
+                          <span className="elo-change"> ({r.previous_elo} → {r.new_elo})</span>
+                        )}
                       </li>
                     ))}
                     {d.winner_id === null && participantsFor(d).length >= 2 && (
