@@ -33,6 +33,37 @@ export default function DuelsList() {
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [revertingId, setRevertingId] = useState(null)
+
+  // Undoes just this one match's rating swing — subtracts (new_elo -
+  // previous_elo) from whatever the player's elo is *now*, rather than
+  // resetting straight to previous_elo, so any legitimate matches played
+  // since aren't wiped out too. elo_reverted flips true so the button
+  // disappears afterward and this can't be applied twice.
+  const handleRevertElo = async (result) => {
+    if (!window.confirm(`¿Devolver el ELO de ${result.profile?.username ?? 'este jugador'} por este duelo?`)) return
+    setRevertingId(result.id)
+    try {
+      const delta = result.new_elo - result.previous_elo
+      const revertedElo = Math.max(0, (result.profile?.elo ?? 0) - delta)
+      const { error: profileError } = await supabase.from('profiles').update({ elo: revertedElo }).eq('id', result.profile_id)
+      if (profileError) throw profileError
+      const { error: resultError } = await supabase.from('duel_results').update({ elo_reverted: true }).eq('id', result.id)
+      if (resultError) throw resultError
+      setRows((prev) =>
+        prev.map((d) => ({
+          ...d,
+          duel_results: d.duel_results.map((r) =>
+            r.id === result.id ? { ...r, elo_reverted: true, profile: { ...r.profile, elo: revertedElo } } : r,
+          ),
+        })),
+      )
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setRevertingId(null)
+    }
+  }
 
   const fetchRows = useCallback(async () => {
     setLoading(true)
@@ -43,7 +74,7 @@ export default function DuelsList() {
         `id, invite_code, matchmaking, is_multiplayer, created_at, closed_at, winner_id,
         challenger:challenger_id(id, username),
         opponent:opponent_id(id, username),
-        duel_results(profile_id, total_score, previous_elo, new_elo, profile:profile_id(id, username)),
+        duel_results(id, profile_id, total_score, previous_elo, new_elo, elo_reverted, profile:profile_id(id, username, elo)),
         group:group_duel(id, name)`,
         { count: 'exact' },
       )
@@ -156,6 +187,17 @@ export default function DuelsList() {
                         {r.previous_elo != null && r.new_elo != null && (
                           <span className="elo-change"> ({r.previous_elo} → {r.new_elo})</span>
                         )}
+                        {r.previous_elo != null && r.new_elo != null && !r.elo_reverted && (
+                          <button
+                            type="button"
+                            className="edit-btn elo-revert-btn"
+                            disabled={revertingId === r.id}
+                            onClick={() => handleRevertElo(r)}
+                          >
+                            {revertingId === r.id ? 'Devolviendo...' : 'Devolver ELO'}
+                          </button>
+                        )}
+                        {r.elo_reverted && <span className="elo-reverted-label">ELO devuelto ✓</span>}
                       </li>
                     ))}
                     {d.winner_id === null && participantsFor(d).length >= 2 && (
