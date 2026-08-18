@@ -673,6 +673,28 @@
   color: #dc2626;
 }
 
+.daily-popup-active-check {
+  flex-shrink: 0;
+}
+
+.daily-popup-preview-modal {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.daily-popup-preview-image {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.daily-popup-preview-image-mobile {
+  max-width: 240px;
+}
+
 .badge-delete-btn:hover {
   background: #fee2e2;
 }

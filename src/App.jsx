@@ -7,6 +7,7 @@ import UsersList from './UsersList'
 import DailyMapsPanel from './DailyMapsPanel'
 import GroupsList from './GroupsList'
 import CommentsList from './CommentsList'
+import DailyPopupsPanel from './DailyPopupsPanel'
 import LogrosPanel from './LogrosPanel'
 import FilesPanel from './FilesPanel'
 import AnalyticsPanel from './AnalyticsPanel'
@@ -20,6 +21,7 @@ const TABS = [
   { id: 'mapas', label: 'Mapas del día' },
   { id: 'grupos', label: 'Grupos' },
   { id: 'comentarios', label: 'Comentarios' },
+  { id: 'popups', label: 'Popup diario' },
   { id: 'logros', label: 'Logros' },
   { id: 'archivos', label: 'Archivos' },
   { id: 'analiticas', label: 'Analíticas' },
@@ -88,6 +90,7 @@ function App() {
       {tab === 'mapas' && <DailyMapsPanel />}
       {tab === 'grupos' && <GroupsList />}
       {tab === 'comentarios' && <CommentsList />}
+      {tab === 'popups' && <DailyPopupsPanel />}
       {tab === 'logros' && <LogrosPanel />}
       {tab === 'archivos' && <FilesPanel />}
       {tab === 'analiticas' && <AnalyticsPanel />}
