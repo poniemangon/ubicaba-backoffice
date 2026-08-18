@@ -29,6 +29,7 @@ export default function UsersList() {
     supabase
       .from('profiles')
       .select('id, created_at')
+      .eq('is_bot', false)
       .order('created_at', { ascending: true })
       .then(({ data, error: rankError }) => {
         if (rankError) {
