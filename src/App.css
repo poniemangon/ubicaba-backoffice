@@ -683,6 +683,16 @@
   font-size: 13px;
 }
 
+.ghost-badge {
+  color: #7c3aed;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.ghost-mode-label {
+  margin-left: 4px;
+}
+
 .stat-tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

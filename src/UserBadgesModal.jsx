@@ -117,7 +117,7 @@ function BadgeRow({ badge, onChanged }) {
   )
 }
 
-export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBanChanged }) {
+export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBanChanged, onGhostModeChanged }) {
   const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -131,6 +131,10 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBa
   const [isBanned, setIsBanned] = useState(!!user.is_banned)
   const [banSaving, setBanSaving] = useState(false)
   const [banError, setBanError] = useState(null)
+
+  const [ghostMode, setGhostMode] = useState(!!user.ghost_mode)
+  const [ghostSaving, setGhostSaving] = useState(false)
+  const [ghostError, setGhostError] = useState(null)
 
   const [addOpen, setAddOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
@@ -199,6 +203,22 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBa
       setBanError(err.message)
     } finally {
       setBanSaving(false)
+    }
+  }
+
+  const handleToggleGhostMode = async (e) => {
+    const next = e.target.checked
+    setGhostError(null)
+    setGhostSaving(true)
+    try {
+      const { error: updateError } = await supabase.from('profiles').update({ ghost_mode: next }).eq('id', user.id)
+      if (updateError) throw updateError
+      setGhostMode(next)
+      onGhostModeChanged?.(user.id, next)
+    } catch (err) {
+      setGhostError(err.message)
+    } finally {
+      setGhostSaving(false)
     }
   }
 
@@ -296,9 +316,14 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBa
           >
             {banSaving ? 'Guardando...' : isBanned ? 'Desbanear' : 'Banear'}
           </button>
+          <label className="checkbox-label ghost-mode-label">
+            <input type="checkbox" checked={ghostMode} onChange={handleToggleGhostMode} disabled={ghostSaving} />
+            👻 Modo fantasma
+          </label>
         </div>
 
         {banError && <p className="error-banner">{banError}</p>}
+        {ghostError && <p className="error-banner">{ghostError}</p>}
         {error && <p className="error-banner">{error}</p>}
 
         {loading ? (

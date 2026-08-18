@@ -61,7 +61,8 @@ export default function UsersList() {
     setError(null)
     let query = supabase
       .from('profiles')
-      .select('id, username, avatar_url, elo, ranked_games_played, created_at, is_banned')
+      .select('id, username, avatar_url, elo, ranked_games_played, created_at, is_banned, ghost_mode')
+      .eq('is_bot', false)
 
     if (search.trim()) {
       const term = search.trim().replace(/[%_]/g, '')
@@ -153,6 +154,7 @@ export default function UsersList() {
                 <td>
                   {u.username}
                   {u.is_banned && <span className="ban-badge"> 🚫 Baneado</span>}
+                  {u.ghost_mode && <span className="ghost-badge"> 👻 Fantasma</span>}
                 </td>
                 <td>{u.ranked_games_played > 0 ? u.elo : 'Sin ranking'}</td>
                 <td>{u.ranked_games_played}</td>
@@ -187,6 +189,10 @@ export default function UsersList() {
           onBanChanged={(id, isBanned) => {
             setAllRows((prev) => prev.map((r) => (r.id === id ? { ...r, is_banned: isBanned } : r)))
             setSelectedUser((prev) => (prev ? { ...prev, is_banned: isBanned } : prev))
+          }}
+          onGhostModeChanged={(id, ghostMode) => {
+            setAllRows((prev) => prev.map((r) => (r.id === id ? { ...r, ghost_mode: ghostMode } : r)))
+            setSelectedUser((prev) => (prev ? { ...prev, ghost_mode: ghostMode } : prev))
           }}
         />
       )}
