@@ -5,6 +5,10 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
 function BadgeRow({ badge, onChanged }) {
   const [editing, setEditing] = useState(false)
   const [imageUrl, setImageUrl] = useState(badge.image_url)
@@ -135,6 +139,8 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBa
   const [ghostMode, setGhostMode] = useState(!!user.ghost_mode)
   const [ghostSaving, setGhostSaving] = useState(false)
   const [ghostError, setGhostError] = useState(null)
+  const [ghostActivity, setGhostActivity] = useState([])
+  const [ghostActivityLoading, setGhostActivityLoading] = useState(false)
 
   const [addOpen, setAddOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
@@ -160,6 +166,25 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBa
 
   useEffect(() => {
     fetchBadges()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id])
+
+  // Only ever has rows for someone who's actually been ghost_mode at some
+  // point (see 0070) — fetched regardless so toggling ghost mode off and
+  // back on doesn't hide prior history.
+  useEffect(() => {
+    setGhostActivityLoading(true)
+    supabase
+      .from('ghost_activity_log')
+      .select('id, ip_address, user_agent, created_at')
+      .eq('profile_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data, error: fetchError }) => {
+        if (fetchError) console.error(fetchError)
+        else setGhostActivity(data)
+        setGhostActivityLoading(false)
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id])
 
@@ -325,6 +350,27 @@ export default function UserBadgesModal({ user, onClose, onUsernameChanged, onBa
         {banError && <p className="error-banner">{banError}</p>}
         {ghostError && <p className="error-banner">{ghostError}</p>}
         {error && <p className="error-banner">{error}</p>}
+
+        {(ghostMode || ghostActivity.length > 0) && (
+          <div className="ghost-activity-section">
+            <p className="badge-item-title">👻 Actividad como fantasma</p>
+            {ghostActivityLoading ? (
+              <p className="loading-text">Cargando...</p>
+            ) : ghostActivity.length === 0 ? (
+              <p className="profile-empty-text">Sin registros todavía.</p>
+            ) : (
+              <ul className="ghost-activity-list">
+                {ghostActivity.map((a) => (
+                  <li key={a.id} className="ghost-activity-row">
+                    <span className="badge-item-date">{formatDateTime(a.created_at)}</span>
+                    <span className="badge-item-text">{a.ip_address ?? '—'}</span>
+                    <span className="badge-item-text ghost-activity-agent">{a.user_agent ?? '—'}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <p className="loading-text">Cargando...</p>

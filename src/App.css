@@ -715,6 +715,40 @@
   margin-left: 4px;
 }
 
+.ghost-activity-section {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #faf5ff;
+}
+
+.ghost-activity-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ghost-activity-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.ghost-activity-agent {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .stat-tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
