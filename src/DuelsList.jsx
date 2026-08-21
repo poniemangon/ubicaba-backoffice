@@ -28,6 +28,7 @@ function participantsFor(duel) {
 export default function DuelsList() {
   const [matchmakingFilter, setMatchmakingFilter] = useState('')
   const [modeFilter, setModeFilter] = useState('')
+  const [userSearch, setUserSearch] = useState('')
   const [page, setPage] = useState(0)
   const [rows, setRows] = useState([])
   const [totalCount, setTotalCount] = useState(0)
@@ -68,6 +69,42 @@ export default function DuelsList() {
   const fetchRows = useCallback(async () => {
     setLoading(true)
     setError(null)
+
+    // A participant can be a duel's challenger/opponent (always, even a
+    // no-show) or only show up via duel_results (multiplayer has no fixed
+    // challenger/opponent slots) — so a username filter has to resolve to
+    // profile ids first, then match against all three, not just one column.
+    let userFilter = null
+    if (userSearch.trim()) {
+      const term = userSearch.trim().replace(/[%_]/g, '')
+      const { data: matches, error: userError } = await supabase.from('profiles').select('id').ilike('username', `%${term}%`)
+      if (userError) {
+        setError(userError.message)
+        setLoading(false)
+        return
+      }
+      const ids = (matches || []).map((p) => p.id)
+      if (ids.length === 0) {
+        setRows([])
+        setTotalCount(0)
+        setLoading(false)
+        return
+      }
+      const { data: resultRows, error: resultError } = await supabase
+        .from('duel_results')
+        .select('duel_id')
+        .in('profile_id', ids)
+      if (resultError) {
+        setError(resultError.message)
+        setLoading(false)
+        return
+      }
+      const duelIds = [...new Set((resultRows || []).map((r) => r.duel_id))]
+      const orParts = [`challenger_id.in.(${ids.join(',')})`, `opponent_id.in.(${ids.join(',')})`]
+      if (duelIds.length > 0) orParts.push(`id.in.(${duelIds.join(',')})`)
+      userFilter = orParts.join(',')
+    }
+
     let query = supabase
       .from('duels')
       .select(
@@ -96,6 +133,9 @@ export default function DuelsList() {
     } else if (modeFilter === 'group') {
       query = query.not('group_duel', 'is', null)
     }
+    if (userFilter) {
+      query = query.or(userFilter)
+    }
 
     const { data, error: fetchError, count } = await query
     if (fetchError) {
@@ -105,7 +145,7 @@ export default function DuelsList() {
       setTotalCount(count ?? 0)
     }
     setLoading(false)
-  }, [matchmakingFilter, modeFilter, page])
+  }, [matchmakingFilter, modeFilter, userSearch, page])
 
   useEffect(() => {
     fetchRows()
@@ -116,6 +156,15 @@ export default function DuelsList() {
   return (
     <div className="list-wrap">
       <div className="list-controls">
+        <input
+          type="text"
+          placeholder="Filtrar por usuario..."
+          value={userSearch}
+          onChange={(e) => {
+            setUserSearch(e.target.value)
+            setPage(0)
+          }}
+        />
         <select
           value={matchmakingFilter}
           onChange={(e) => {
