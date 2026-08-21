@@ -35,6 +35,25 @@ export default function DuelsList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [revertingId, setRevertingId] = useState(null)
+  const [botIds, setBotIds] = useState(null)
+
+  // Fetched once — bots don't come and go often (0066/0072). Used to
+  // exclude bot-vs-bot simulated duels from the list/count entirely: real
+  // activity only, including a real player's ghost-mode duel against a bot.
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('id')
+      .eq('is_bot', true)
+      .then(({ data, error: botError }) => {
+        if (botError) {
+          console.error(botError)
+          setBotIds([])
+          return
+        }
+        setBotIds((data || []).map((b) => b.id))
+      })
+  }, [])
 
   // Undoes just this one match's rating swing — subtracts (new_elo -
   // previous_elo) from whatever the player's elo is *now*, rather than
@@ -136,6 +155,14 @@ export default function DuelsList() {
     if (userFilter) {
       query = query.or(userFilter)
     }
+    // Bot-vs-bot simulated duels (0072) shouldn't count as real duel
+    // activity — exclude rows where BOTH sides are bots. Keeping "at least
+    // one side isn't a bot" (De Morgan's) also correctly keeps multiplayer
+    // rows, where opponent_id is always null but challenger_id isn't a bot.
+    if (botIds && botIds.length > 0) {
+      const idList = botIds.join(',')
+      query = query.or(`challenger_id.not.in.(${idList}),opponent_id.not.in.(${idList})`)
+    }
 
     const { data, error: fetchError, count } = await query
     if (fetchError) {
@@ -145,7 +172,7 @@ export default function DuelsList() {
       setTotalCount(count ?? 0)
     }
     setLoading(false)
-  }, [matchmakingFilter, modeFilter, userSearch, page])
+  }, [matchmakingFilter, modeFilter, userSearch, page, botIds])
 
   useEffect(() => {
     fetchRows()
