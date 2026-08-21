@@ -10,6 +10,7 @@ function formatDate(iso) {
 
 export default function UsersList() {
   const [search, setSearch] = useState('')
+  const [ghostOnly, setGhostOnly] = useState(false)
   const [page, setPage] = useState(0)
   const [sortBy, setSortBy] = useState('created_at') // 'created_at' | 'referrals'
   const [sortDir, setSortDir] = useState('desc') // 'asc' | 'desc'
@@ -69,6 +70,9 @@ export default function UsersList() {
       const term = search.trim().replace(/[%_]/g, '')
       query = query.ilike('username', `%${term}%`)
     }
+    if (ghostOnly) {
+      query = query.eq('ghost_mode', true)
+    }
 
     const { data, error: fetchError } = await query
     if (fetchError) {
@@ -77,7 +81,7 @@ export default function UsersList() {
       setAllRows(data)
     }
     setLoading(false)
-  }, [search])
+  }, [search, ghostOnly])
 
   useEffect(() => {
     fetchRows()
@@ -117,6 +121,17 @@ export default function UsersList() {
             setPage(0)
           }}
         />
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={ghostOnly}
+            onChange={(e) => {
+              setGhostOnly(e.target.checked)
+              setPage(0)
+            }}
+          />
+          👻 Solo fantasmas
+        </label>
         <span className="total-count">{totalCount} usuarios</span>
       </div>
 
